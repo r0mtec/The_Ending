@@ -9,11 +9,16 @@ public class Player : MonoBehaviour
     public float distance_step = 1f;
     public float distanceToCheck = 5f;
 
+    private SpriteRenderer spriteRenderer;
+
     private Vector3 targetPosition;
     public LayerMask obstacleLayer;
+    private Animator animator;
 
     void Start()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
     }
 
     bool Can_Step(Vector2 direction)
@@ -21,8 +26,6 @@ public class Player : MonoBehaviour
         BoxCollider2D collider = GetComponent<BoxCollider2D>();
         Vector2 colliderSize = collider.size * transform.localScale;
         Vector2 currentPosition = transform.position;
-        currentPosition.y -= 0.1f;
-        currentPosition.y += 0.05f;
         // Позиция для проверки столкновения
         Vector2 checkPosition = currentPosition + direction * distanceToCheck;
 
@@ -46,12 +49,20 @@ public class Player : MonoBehaviour
     void Update()
     {
         Vector2 forwardDirection = Vector2.right;
-        
+
+        if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.S))
+        {
+            animator.SetInteger("MoveX", 0);
+            animator.SetInteger("MoveY", 0);
+        }
+
         if (Input.GetKey(KeyCode.D))
         {
             forwardDirection = Vector2.right;
             if (Can_Step(forwardDirection))
             {
+                animator.SetInteger("MoveX", 1);
+                animator.SetInteger("MoveY", 0);
                 targetPosition = new Vector3(transform.position.x + distance_step, transform.position.y, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
             }
@@ -59,8 +70,11 @@ public class Player : MonoBehaviour
         if (Input.GetKey(KeyCode.W))
         {
             forwardDirection = Vector2.up;
+
             if (Can_Step(forwardDirection))
             {
+                animator.SetInteger("MoveX", 0);
+                animator.SetInteger("MoveY", 1);
                 targetPosition = new Vector3(transform.position.x, transform.position.y + distance_step, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
             }
@@ -70,6 +84,8 @@ public class Player : MonoBehaviour
             forwardDirection = Vector2.down;
             if (Can_Step(forwardDirection))
             {
+                animator.SetInteger("MoveX", 0);
+                animator.SetInteger("MoveY", -1);
                 targetPosition = new Vector3(transform.position.x, transform.position.y - distance_step, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
             }
@@ -79,6 +95,8 @@ public class Player : MonoBehaviour
             forwardDirection = Vector2.left;
             if (Can_Step(forwardDirection))
             {
+                animator.SetInteger("MoveX", -1);
+                animator.SetInteger("MoveY", 0);
                 targetPosition = new Vector3(transform.position.x - distance_step, transform.position.y, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
             }
