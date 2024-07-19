@@ -13,8 +13,15 @@ public class Player : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
     private Vector3 targetPosition;
+
+
     public LayerMask obstacleLayer;
+
+    public LayerMask interactAndObstacleLayer;
+
     public LayerMask interactionLayer;
+
+
     private Animator animator; 
     public Sprite[] players_state;
     private Vector2 forwardDirection;
@@ -23,6 +30,7 @@ public class Player : MonoBehaviour
     public VariableJoystick joestick;
     public Button interactButton;
 
+    private LayerMask combinedLayerMask;
 
     void Start()
     {
@@ -30,15 +38,16 @@ public class Player : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    bool Can_Step(Vector2 direction)
+    Collider2D Can_Step(Vector2 direction, LayerMask combinedLayerMask)
     {
         BoxCollider2D collider = GetComponent<BoxCollider2D>();
         Vector2 colliderSize = collider.size * transform.localScale;
         Vector2 currentPosition = transform.position;
-        // Позиция для проверки столкновения
+        currentPosition.y -= 0.8f;
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         Vector2 checkPosition = currentPosition + direction * distanceToCheck;
 
-        // Отрисовка области проверки
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         Vector2 topLeft = new Vector2(checkPosition.x - colliderSize.x / 2, checkPosition.y + colliderSize.y / 2);
         Vector2 topRight = new Vector2(checkPosition.x + colliderSize.x / 2, checkPosition.y + colliderSize.y / 2);
         Vector2 bottomLeft = new Vector2(checkPosition.x - colliderSize.x / 2, checkPosition.y - colliderSize.y / 2);
@@ -49,9 +58,9 @@ public class Player : MonoBehaviour
         Debug.DrawLine(bottomRight, bottomLeft, Color.red);
         Debug.DrawLine(bottomLeft, topLeft, Color.red);
 
-        // Проверка наличия коллайдеров на позиции
-        Collider2D hit = Physics2D.OverlapBox(checkPosition, colliderSize, 0, obstacleLayer);
-        return hit == null;
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        Collider2D hit = Physics2D.OverlapBox(checkPosition, colliderSize, 0, combinedLayerMask);
+        return hit;
     }
 
     void Update()
@@ -68,7 +77,8 @@ public class Player : MonoBehaviour
         if (moveX > 0.5f)
         {
             forwardDirection = Vector2.right;
-            if (Can_Step(forwardDirection))
+            combinedLayerMask = obstacleLayer | interactAndObstacleLayer;
+            if (Can_Step(forwardDirection, combinedLayerMask) == null)
             {
                 animator.SetInteger("MoveX", 1);
                 animator.SetInteger("MoveY", 0);
@@ -82,8 +92,8 @@ public class Player : MonoBehaviour
         if (moveY > 0.5f)
         {
             forwardDirection = Vector2.up;
-
-            if (Can_Step(forwardDirection))
+            combinedLayerMask = obstacleLayer | interactAndObstacleLayer;
+            if (Can_Step(forwardDirection, combinedLayerMask) == null)
             {
                 animator.SetInteger("MoveX", 0);
                 animator.SetInteger("MoveY", 1);
@@ -97,7 +107,8 @@ public class Player : MonoBehaviour
         if (moveY < -0.5f)
         {
             forwardDirection = Vector2.down;
-            if (Can_Step(forwardDirection))
+            combinedLayerMask = obstacleLayer | interactAndObstacleLayer;
+            if (Can_Step(forwardDirection, combinedLayerMask) == null)
             {
                 animator.SetInteger("MoveX", 0);
                 animator.SetInteger("MoveY", -1);
@@ -111,7 +122,8 @@ public class Player : MonoBehaviour
         if (moveX < -0.5f)
         {
             forwardDirection = Vector2.left;
-            if (Can_Step(forwardDirection))
+            combinedLayerMask = obstacleLayer | interactAndObstacleLayer;
+            if (Can_Step(forwardDirection, combinedLayerMask) == null)
             {
                 animator.SetInteger("MoveX", -1);
                 animator.SetInteger("MoveY", 0);
@@ -123,9 +135,8 @@ public class Player : MonoBehaviour
             }
         }
 
-
-        RaycastHit2D hitInfo = Physics2D.Raycast(transform.position, forwardDirection, distanceToCheck, interactionLayer);
-        if (hitInfo.collider != null)
+        combinedLayerMask = interactionLayer | interactAndObstacleLayer;
+        if (Can_Step(forwardDirection, combinedLayerMask) != null)
         {
             interactButton.gameObject.SetActive(true);
         }
