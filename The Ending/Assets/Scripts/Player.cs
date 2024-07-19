@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -17,8 +18,10 @@ public class Player : MonoBehaviour
     private Animator animator; 
     public Sprite[] players_state;
     private Vector2 forwardDirection;
-    public Sprite xz;
+
+
     public VariableJoystick joestick;
+    public Button interactButton;
 
 
     void Start()
@@ -69,11 +72,14 @@ public class Player : MonoBehaviour
             {
                 animator.SetInteger("MoveX", 1);
                 animator.SetInteger("MoveY", 0);
-                targetPosition = new Vector3(transform.position.x + distance_step, transform.position.y, transform.position.z);
-                transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                //if (IsAnimationPlaying("WalkRight") || IsAnimationNextPlaying("WalkRight"))
+                //{
+                    targetPosition = new Vector3(transform.position.x + distance_step, transform.position.y, transform.position.z);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                //}        
             }
         }
-        else if (moveY > 0.5f)
+        if (moveY > 0.5f)
         {
             forwardDirection = Vector2.up;
 
@@ -81,56 +87,81 @@ public class Player : MonoBehaviour
             {
                 animator.SetInteger("MoveX", 0);
                 animator.SetInteger("MoveY", 1);
-                targetPosition = new Vector3(transform.position.x, transform.position.y + distance_step, transform.position.z);
-                transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-                spriteRenderer.sprite = players_state[0];
+                //if (IsAnimationPlaying("WalkUp") || IsAnimationNextPlaying("WalkUp"))
+                //{
+                    targetPosition = new Vector3(transform.position.x, transform.position.y + distance_step, transform.position.z);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                //}
             }
         }
-        else if (moveY < -0.5f)
+        if (moveY < -0.5f)
         {
             forwardDirection = Vector2.down;
             if (Can_Step(forwardDirection))
             {
                 animator.SetInteger("MoveX", 0);
                 animator.SetInteger("MoveY", -1);
-                targetPosition = new Vector3(transform.position.x, transform.position.y - distance_step, transform.position.z);
-                transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-                spriteRenderer.sprite = players_state[1];
+                //if (IsAnimationPlaying("WalkDown") || IsAnimationNextPlaying("WalkDown"))
+                //{
+                    targetPosition = new Vector3(transform.position.x, transform.position.y - distance_step, transform.position.z);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                //}
             }
         }
-        else if (moveX < -0.5f)
+        if (moveX < -0.5f)
         {
             forwardDirection = Vector2.left;
             if (Can_Step(forwardDirection))
             {
                 animator.SetInteger("MoveX", -1);
                 animator.SetInteger("MoveY", 0);
-                targetPosition = new Vector3(transform.position.x - distance_step, transform.position.y, transform.position.z);
-                transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-                spriteRenderer.sprite = players_state[3];
+                //if (IsAnimationPlaying("WalkLeft") || IsAnimationNextPlaying("WalkLeft"))
+                //{
+                    targetPosition = new Vector3(transform.position.x - distance_step, transform.position.y, transform.position.z);
+                    transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                //}
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.E))
+
+        RaycastHit2D hitInfo = Physics2D.Raycast(transform.position, forwardDirection, distanceToCheck, interactionLayer);
+        if (hitInfo.collider != null)
         {
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, forwardDirection, distanceToCheck, interactionLayer);
-            Debug.DrawRay(transform.position, forwardDirection * distanceToCheck, Color.red);
-            if (hit.collider != null)
+            interactButton.gameObject.SetActive(true);
+        }
+        else
+        {
+            interactButton.gameObject.SetActive(false);
+        }
+
+    }
+
+
+    public void Interact()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, forwardDirection, distanceToCheck, interactionLayer);
+        Debug.DrawRay(transform.position, forwardDirection * distanceToCheck, Color.red);
+        if (hit.collider != null)
+        {
+            if (hit.collider.CompareTag("fridge"))
             {
-                if (hit.collider.CompareTag("fridge"))
+                Animator fridgeAnimator = hit.collider.GetComponent<Animator>();
+                if (fridgeAnimator != null)
                 {
-                    Animator fridgeAnimator = hit.collider.GetComponent<Animator>();
-                    if (fridgeAnimator != null)
-                    {
-                        fridgeAnimator.SetTrigger("open");
-                    }
+                    fridgeAnimator.SetTrigger("open");
                 }
             }
         }
-        spriteRenderer.sprite = players_state[2];
     }
-    public void setDirection()
+
+    bool IsAnimationPlaying(string animationName)
     {
-        animator.SetTrigger("state_up");
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        return currentState.IsName(animationName);
+    }
+    bool IsAnimationNextPlaying(string animationName)
+    {
+        AnimatorStateInfo currentState = animator.GetNextAnimatorStateInfo(0);
+        return currentState.IsName(animationName);
     }
 }
