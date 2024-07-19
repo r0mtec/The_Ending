@@ -13,7 +13,13 @@ public class Player : MonoBehaviour
 
     private Vector3 targetPosition;
     public LayerMask obstacleLayer;
-    private Animator animator;
+    public LayerMask interactionLayer;
+    private Animator animator; 
+    public Sprite[] players_state;
+    private Vector2 forwardDirection;
+    public Sprite xz;
+    public VariableJoystick joestick;
+
 
     void Start()
     {
@@ -42,21 +48,21 @@ public class Player : MonoBehaviour
 
         // ѕроверка наличи€ коллайдеров на позиции
         Collider2D hit = Physics2D.OverlapBox(checkPosition, colliderSize, 0, obstacleLayer);
-
         return hit == null;
     }
 
     void Update()
     {
-        Vector2 forwardDirection = Vector2.right;
+        float moveX = joestick.Horizontal;
+        float moveY = joestick.Vertical;
 
-        if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.S))
+        if ((moveX <= 0.5f && moveX >= -0.5f) || (moveY <= 0.5f && moveY >= -0.5f))
         {
             animator.SetInteger("MoveX", 0);
             animator.SetInteger("MoveY", 0);
         }
 
-        if (Input.GetKey(KeyCode.D))
+        if (moveX > 0.5f)
         {
             forwardDirection = Vector2.right;
             if (Can_Step(forwardDirection))
@@ -67,7 +73,7 @@ public class Player : MonoBehaviour
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
             }
         }
-        if (Input.GetKey(KeyCode.W))
+        else if (moveY > 0.5f)
         {
             forwardDirection = Vector2.up;
 
@@ -77,9 +83,10 @@ public class Player : MonoBehaviour
                 animator.SetInteger("MoveY", 1);
                 targetPosition = new Vector3(transform.position.x, transform.position.y + distance_step, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                spriteRenderer.sprite = players_state[0];
             }
         }
-        if (Input.GetKey(KeyCode.S))
+        else if (moveY < -0.5f)
         {
             forwardDirection = Vector2.down;
             if (Can_Step(forwardDirection))
@@ -88,9 +95,10 @@ public class Player : MonoBehaviour
                 animator.SetInteger("MoveY", -1);
                 targetPosition = new Vector3(transform.position.x, transform.position.y - distance_step, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                spriteRenderer.sprite = players_state[1];
             }
         }
-        if (Input.GetKey(KeyCode.A))
+        else if (moveX < -0.5f)
         {
             forwardDirection = Vector2.left;
             if (Can_Step(forwardDirection))
@@ -99,8 +107,30 @@ public class Player : MonoBehaviour
                 animator.SetInteger("MoveY", 0);
                 targetPosition = new Vector3(transform.position.x - distance_step, transform.position.y, transform.position.z);
                 transform.position = Vector3.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
+                spriteRenderer.sprite = players_state[3];
             }
         }
-        
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, forwardDirection, distanceToCheck, interactionLayer);
+            Debug.DrawRay(transform.position, forwardDirection * distanceToCheck, Color.red);
+            if (hit.collider != null)
+            {
+                if (hit.collider.CompareTag("fridge"))
+                {
+                    Animator fridgeAnimator = hit.collider.GetComponent<Animator>();
+                    if (fridgeAnimator != null)
+                    {
+                        fridgeAnimator.SetTrigger("open");
+                    }
+                }
+            }
+        }
+        spriteRenderer.sprite = players_state[2];
+    }
+    public void setDirection()
+    {
+        animator.SetTrigger("state_up");
     }
 }
